@@ -58,57 +58,62 @@ function promptUser() {
             name: "tests",
             message: "Write tests and provide examples to run them"
         }
-    ]).then(function ({ username }) {
-        const queryUrl = `https://api.github.com/users/${username}/repo?per_page=100`;
-        
+    ]).then(function (answers) {
+        const queryUrl = `https://api.github.com/users/${answers.username}`;
+
 
         axios.get(queryUrl).then(function (res) {
-            const repoNames = res.data.map(function (repo) {
-                return repo.name;
-            });
+            const response = res.data;
+            const profPic = res.data.avatar_url;
+            //console.log(res)
 
-            const repoNamesStr = repoNames.join("\n");
 
-            fs.writeFile("repos.txt", repoNamesStr, function (err) {
+            fs.writeFile("repos.txt", response, function (err) {
                 if (err) {
                     throw err;
                 }
 
-                console.log(`Saved ${repoNames.length} repos`);
             });
+
+            const readMe = generateReadMe(answers);
+            const seeImg = generateImage(profPic);
+            writeFileAsync("README.md", readMe, seeImg);
+
+
         });
+
+        //const repoNamesStr = repoNames.join("\n");
+
+
     });
 }
-
 function generateReadMe(answers) {
     return `
-    ## Generated ReadMe
+## Generated ReadMe
 
-    * ${answers.email}
-    * ${answers.title}
-    * ${answers.description}
-    * Here are the instrucions for installation.
-    * ${answers.install}
-    * ${answers.table}
-    ## 💡 Hints
+## Info
++ ${answers.username}
+
++ ${answers.email}
+
++ ${answers.title}
+
++ ${answers.description}
     
-    * Take a look at the API response from the GitHub API to get an idea of how the data is structured. Example: <https://api.github.com/users/fabpot/repos?per_page=100>.
+Here are the instrucions for installation.
     
-      * Avoid continually refreshing this page since there's a limit for non-authenticated requests to the GitHub API.
++ ${answers.install}
     
-    clear
-    `;
++ ${answers.table}
+## 💡 Hits
+`;
 }
 
-promptUser()
-    .then(function (answers) {
-        const readMe = generateReadMe(answers);
+function generateImage(profPic) {
+    return `
+    ![GitHub Profile](/${profPic})
+Format: ![Alt Text](${profPic})`;
+}
 
-        return writeFileAsync("README.md", readMe);
-    })
-    .then(function () {
-        console.log("Successfully wrote to README.md");
-    })
-    .catch(function (err) {
-        console.log(err);
-    });
+promptUser();
+
